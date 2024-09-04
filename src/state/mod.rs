@@ -2,6 +2,7 @@ mod combatant;
 
 use combatant::add::AddCombatant;
 use crossterm::event::KeyCode;
+use ratatui::{prelude::*, widgets::*};
 
 fn fmt_key_code(key: KeyCode) -> String {
     match key {
@@ -29,6 +30,27 @@ impl From<State> for Transition {
     }
 }
 
+/// A widget that can be rendered to the terminal.
+pub enum AnyWidget<'a> {
+    Table(Table<'a>),
+}
+
+impl Widget for AnyWidget<'_> {
+    fn render(self, area: Rect, buf: &mut Buffer)
+        where Self: Sized
+    {
+        match self {
+            AnyWidget::Table(table) => Widget::render(table, area, buf),
+        }
+    }
+}
+
+impl<'a> From<Table<'a>> for AnyWidget<'a> {
+    fn from(table: Table<'a>) -> Self {
+        AnyWidget::Table(table)
+    }
+}
+
 /// Any state the initiative tracker can be in.
 #[derive(Default, PartialEq, Eq)]
 pub enum State {
@@ -52,7 +74,7 @@ impl State {
     /// A transition declaration can also override the default key that triggers the transition.
     pub fn transitions(&self) -> Vec<Transition> {
         match self {
-            State::Home => vec![State::AddCombatant(AddCombatant).into(), State::Quit.into()],
+            State::Home => vec![State::AddCombatant(AddCombatant::default()).into(), State::Quit.into()],
             State::AddCombatant(_) => vec![State::Home.into()],
             State::Quit => vec![],
         }
@@ -98,5 +120,13 @@ impl State {
             })
             .collect::<Vec<String>>()
             .join("\n")
+    }
+
+    /// Renders the state to a widget.
+    pub fn render(&self) -> Option<AnyWidget> {
+        match self {
+            State::AddCombatant(add) => Some(add.render().into()),
+            _ => None,
+        }
     }
 }

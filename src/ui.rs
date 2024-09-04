@@ -14,8 +14,12 @@ pub struct RenderLocations {
     /// at the top of the screen.
     pub combatant_table: Rect,
 
-    /// The box showing the available commands for the current state. This appears at the bottom.
+    /// The box showing the available commands for the current state. This appears at the
+    /// bottom-right.
     pub guide: Rect,
+
+    /// The box used by the current state. This appears at the bottom-left.
+    pub state: Rect,
 }
 
 /// Terminal handler.
@@ -38,16 +42,22 @@ impl Ui {
         Ok(Self {
             terminal,
             locations: {
-                let layout = Layout::vertical([
+                let main_layout = Layout::vertical([
                     Constraint::Percentage(75),
                     Constraint::Percentage(25),
                 ])
                     .horizontal_margin(1)
                     .vertical_margin(1)
                     .split(size);
+                let state_layout = Layout::horizontal([
+                    Constraint::Percentage(50),
+                    Constraint::Percentage(50),
+                ])
+                    .split(main_layout[1]);
                 RenderLocations {
-                    combatant_table: layout[0],
-                    guide: layout[1],
+                    combatant_table: main_layout[0],
+                    guide: state_layout[0],
+                    state: state_layout[1],
                 }
             },
         })
@@ -83,6 +93,19 @@ impl Ui {
                     ),
                 self.locations.guide,
             );
+            if let Some(widget) = state.render() {
+                f.render_widget(widget, self.locations.state);
+            } else {
+                f.render_widget(
+                    Paragraph::new(Text::from("no state is active"))
+                        .block(
+                            Block::default()
+                                .padding(Padding::top(self.locations.state.height / 2)) // vertical padding
+                        )
+                        .centered(), // horizontal align
+                    self.locations.state,
+                );
+            }
         })?;
         Ok(())
     }
