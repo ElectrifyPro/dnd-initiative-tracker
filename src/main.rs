@@ -12,16 +12,26 @@
 mod combatant;
 mod state;
 mod tracker;
+mod ui;
 
 use combatant::Combatant;
 use state::State;
+use std::io::Write;
+use ui::Ui;
 use tracker::Tracker;
 
-fn main() {
+fn main() -> std::io::Result<()> {
+    let mut ui = Ui::new()?;
     let mut tracker = Tracker::new();
 
     loop {
-        println!("{}", tracker);
-        break;
+        let widget = tracker.render();
+        ui.render(widget)?;
+        match ui.read_char()? {
+            'q' => break,
+            _ => (),
+        }
     }
+
+    Ok(())
 }

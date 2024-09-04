@@ -1,3 +1,7 @@
+mod combatant;
+
+use combatant::add::AddCombatant;
+
 /// Any state the initiative tracker can be in.
 #[derive(Default)]
 pub enum State {
@@ -5,6 +9,9 @@ pub enum State {
     /// below.
     #[default]
     Home,
+
+    /// Adding a new combatant to the initiative order.
+    AddCombatant(AddCombatant),
 }
 
 impl State {

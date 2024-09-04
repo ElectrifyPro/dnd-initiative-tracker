@@ -1,8 +1,5 @@
+use ratatui::{prelude::*, widgets::*};
 use super::{Combatant, State};
-use tabled::{
-    builder::Builder,
-    settings::{Modify, object::Rows, Alignment, Style}
-};
 
 /// Manages the initiative tracker.
 #[derive(Default)]
@@ -16,37 +13,28 @@ pub struct Tracker {
     combatants: Vec<Combatant>,
 }
 
-impl std::fmt::Display for Tracker {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        // print the combatants in a table
-        let mut builder = Builder::default();
-
-        // table header:
-        // 0: combatant's initiative
-        // 1: combatant's name
-        builder.push_record([
-            "Initiative",
-            "Name",
-        ]);
-
-        if self.combatants.is_empty() {
-            builder.push_record(["empty"; 1]);
-        } else {
-            self.combatants.iter().for_each(|combatant| {
-                builder.push_record(combatant.record());
-            });
-        }
-
-        let mut table = builder.build();
-        table.with(Style::rounded())
-            .modify(Rows::new(1..), Alignment::left());
-        write!(f, "{}", table)
-    }
-}
-
 impl Tracker {
     /// Creates a new initiative tracker.
     pub fn new() -> Tracker {
         Tracker::default()
+    }
+
+    /// Render the tracker to a [`Table`] widget.
+    pub fn render(&self) -> Table {
+        Table::new(
+            vec![Row::new(["24", "Alice"]).height(2), Row::new(["2", "Bob"]).height(2)],
+            vec![Constraint::Percentage(50), Constraint::Percentage(50)],
+        )
+            .block(
+                Block::bordered()
+                    .border_type(BorderType::Rounded)
+                    .border_style(Style::default().fg(Color::White))
+                    .padding(Padding::horizontal(1))
+            )
+            .header(
+                Row::new([Text::from("Initiative").centered(), Text::from("Name").centered()])
+                    .bold()
+                    .height(2)
+            )
     }
 }
