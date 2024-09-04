@@ -15,8 +15,8 @@ mod tracker;
 mod ui;
 
 use combatant::Combatant;
+use crossterm::event::{read, Event};
 use state::State;
-use std::io::Write;
 use ui::Ui;
 use tracker::Tracker;
 
@@ -26,9 +26,17 @@ fn main() -> std::io::Result<()> {
     let mut state = State::Home;
 
     loop {
+        if state == State::Quit {
+            break;
+        }
+
         ui.render(&tracker, &state)?;
-        match ui.read_char()? {
-            'q' => break,
+        match read()? {
+            Event::Key(event) => {
+                if let Some(transition) = state.transition(event.code) {
+                    state = transition.state;
+                }
+            },
             _ => (),
         }
     }

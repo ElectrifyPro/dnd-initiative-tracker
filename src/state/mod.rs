@@ -30,7 +30,7 @@ impl From<State> for Transition {
 }
 
 /// Any state the initiative tracker can be in.
-#[derive(Default)]
+#[derive(Default, PartialEq, Eq)]
 pub enum State {
     /// The home state, where the user can view the initiative order and launch any other state
     /// below.
@@ -56,6 +56,13 @@ impl State {
             State::AddCombatant(_) => vec![State::Home.into()],
             State::Quit => vec![],
         }
+    }
+
+    /// Returns the state to transition to given a key event.
+    pub fn transition(&self, key: KeyCode) -> Option<Transition> {
+        self.transitions()
+            .into_iter()
+            .find(|transition| transition.key == key)
     }
 
     /// Returns the default key that triggers this state from any other state.
