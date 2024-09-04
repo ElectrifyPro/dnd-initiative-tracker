@@ -30,6 +30,7 @@ impl Tracker {
                     .border_type(BorderType::Rounded)
                     .border_style(Style::default().fg(Color::White))
                     .padding(Padding::horizontal(1))
+                    .title("Initiative Tracker")
             )
             .header(
                 Row::new([Text::from("Initiative").centered(), Text::from("Name").centered()])

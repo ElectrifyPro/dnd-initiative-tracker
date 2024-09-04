@@ -1,3 +1,4 @@
+use crate::{state::State, tracker::Tracker};
 use crossterm::{
     event,
     terminal,
@@ -6,10 +7,24 @@ use crossterm::{
 use ratatui::{prelude::*, widgets::*};
 use std::io;
 
+/// The locations of all widgets on the screen.
+#[derive(Debug, Clone, Copy)]
+pub struct RenderLocations {
+    /// The table showing all combatants, their initiative, statuses, conditions, etc. This appears
+    /// at the top of the screen.
+    pub combatant_table: Rect,
+
+    /// The box showing the available commands for the current state. This appears at the bottom.
+    pub guide: Rect,
+}
+
 /// Terminal handler.
 pub struct Ui {
     /// The terminal.
     terminal: Terminal<CrosstermBackend<io::Stdout>>,
+
+    /// The locations of all widgets on the screen.
+    locations: RenderLocations,
 }
 
 impl Ui {
@@ -17,8 +32,24 @@ impl Ui {
     pub fn new() -> io::Result<Self> {
         terminal::enable_raw_mode()?;
         execute!(io::stdout(), terminal::EnterAlternateScreen)?;
+
+        let terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
+        let size = terminal.size()?;
         Ok(Self {
-            terminal: Terminal::new(CrosstermBackend::new(io::stdout()))?,
+            terminal,
+            locations: {
+                let layout = Layout::vertical([
+                    Constraint::Percentage(75),
+                    Constraint::Percentage(25),
+                ])
+                    .horizontal_margin(1)
+                    .vertical_margin(1)
+                    .split(size);
+                RenderLocations {
+                    combatant_table: layout[0],
+                    guide: layout[1],
+                }
+            },
         })
     }
 
@@ -37,16 +68,22 @@ impl Ui {
         }
     }
 
-    /// Renders the given widget to the terminal.
-    pub fn render<W>(&mut self, widget: W) -> io::Result<()>
-    where
-        W: Widget,
-    {
-        let layout = Layout::default()
-            .direction(Direction::Vertical)
-            .margin(1)
-            .constraints([Constraint::Percentage(100)].as_ref());
-        self.terminal.draw(|f| f.render_widget(widget, f.size()))?;
+    /// Renders the initiative tracker to the terminal.
+    pub fn render(&mut self, tracker: &Tracker, state: &State) -> io::Result<()> {
+        self.terminal.draw(|f| {
+            f.render_widget(tracker.render(), self.locations.combatant_table);
+            f.render_widget(
+                Paragraph::new(state.default_help())
+                    .block(
+                        Block::bordered()
+                            .border_type(BorderType::Rounded)
+                            .border_style(Style::default().fg(Color::White))
+                            .padding(Padding::horizontal(1))
+                            .title("Help"),
+                    ),
+                self.locations.guide,
+            );
+        })?;
         Ok(())
     }
 }

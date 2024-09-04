@@ -23,10 +23,10 @@ use tracker::Tracker;
 fn main() -> std::io::Result<()> {
     let mut ui = Ui::new()?;
     let mut tracker = Tracker::new();
+    let mut state = State::Home;
 
     loop {
-        let widget = tracker.render();
-        ui.render(widget)?;
+        ui.render(&tracker, &state)?;
         match ui.read_char()? {
             'q' => break,
             _ => (),
