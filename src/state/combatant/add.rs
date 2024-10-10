@@ -14,10 +14,15 @@ pub struct AddCombatant {
     /// The current row being edited.
     pub row: usize,
 
-    pub input: Input,
+    input: Input,
 }
 
 impl AddCombatant {
+    /// Returns the [`Input`] widget.
+    pub fn input(&self) -> &Input {
+        &self.input
+    }
+
     pub fn help(&self) -> String {
         format!(
             "<escape>: cancel, back to initiative tracker\n<enter>: {0}\n<ctrl-enter>: {0} and finish",

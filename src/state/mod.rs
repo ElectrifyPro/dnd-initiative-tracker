@@ -142,7 +142,7 @@ impl State {
     /// Renders the state to two widgets, one for the state, and one for the input.
     pub fn render(&self) -> Option<(AnyWidget, Option<AnyWidget>)> {
         match self {
-            State::AddCombatant(add) => Some((add.render().into(), Some((&add.input).into()))),
+            State::AddCombatant(add) => Some((add.render().into(), Some(add.input().into()))),
             _ => None,
         }
     }
