@@ -30,11 +30,16 @@ impl Tracker {
     /// Render the tracker to a [`Table`] widget.
     pub fn render(&self) -> Table {
         Table::new(
-            // vec![Row::new(["24", "Alice"]).height(2), Row::new(["2", "Bob"]).height(2)],
             self.combatants.iter()
-                .map(|combatant| Row::new(combatant.record()).height(2))
+                .map(|combatant| combatant.row().height(2))
                 .collect::<Vec<_>>(),
-            vec![Constraint::Percentage(50), Constraint::Percentage(50)],
+            vec![
+                Constraint::Length(12), // initiative
+                Constraint::Fill(1),    // name
+                Constraint::Length(10), // actions
+                Constraint::Length(14), // hp / max hp
+                Constraint::Length(10), // temp hp
+            ],
         )
             .block(
                 Block::bordered()
@@ -44,7 +49,13 @@ impl Tracker {
                     .title("Initiative Tracker")
             )
             .header(
-                Row::new([Text::from("Initiative").centered(), Text::from("Name").centered()])
+                Row::new([
+                    Text::from("Initiative").centered(),
+                    Text::from("Name").centered(),
+                    Text::from("Actions").centered(),
+                    Text::from("HP / Max HP").centered(),
+                    Text::from("Temp HP").centered(),
+                ])
                     .bold()
                     .height(2)
             )

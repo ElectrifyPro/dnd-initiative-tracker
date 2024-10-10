@@ -9,6 +9,7 @@
 //! you ever get stuck in a weird state, you can always type `h` to see a list of available
 //! commands for the current context or `u` to undo the last command.
 
+mod actions;
 mod combatant;
 mod input;
 mod state;
