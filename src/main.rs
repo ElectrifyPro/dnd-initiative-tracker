@@ -10,6 +10,7 @@
 //! commands for the current context or `u` to undo the last command.
 
 mod combatant;
+mod input;
 mod state;
 mod tracker;
 mod ui;
@@ -31,13 +32,17 @@ fn main() -> std::io::Result<()> {
         }
 
         ui.render(&tracker, &state)?;
-        match read()? {
-            Event::Key(event) => {
-                if let Some(transition) = state.transition(event.code) {
-                    state = transition.state;
-                }
-            },
-            _ => (),
+        let Event::Key(event) = read()? else {
+            continue;
+        };
+        if state.needs_keyboard() {
+            if let Some(new_state) = state.handle_event(event, &mut tracker) {
+                state = new_state;
+            }
+        } else {
+            if let Some(transition) = state.transition(event.code) {
+                state = transition.state;
+            }
         }
     }
 

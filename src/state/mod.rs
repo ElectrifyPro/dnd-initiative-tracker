@@ -1,7 +1,8 @@
 mod combatant;
 
 use combatant::add::AddCombatant;
-use crossterm::event::KeyCode;
+use crate::{input::Input, tracker::Tracker};
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{prelude::*, widgets::*};
 
 fn fmt_key_code(key: KeyCode) -> String {
@@ -33,6 +34,7 @@ impl From<State> for Transition {
 /// A widget that can be rendered to the terminal.
 pub enum AnyWidget<'a> {
     Table(Table<'a>),
+    Input(&'a Input),
 }
 
 impl Widget for AnyWidget<'_> {
@@ -41,6 +43,7 @@ impl Widget for AnyWidget<'_> {
     {
         match self {
             AnyWidget::Table(table) => Widget::render(table, area, buf),
+            AnyWidget::Input(input) => Widget::render(input, area, buf),
         }
     }
 }
@@ -48,6 +51,12 @@ impl Widget for AnyWidget<'_> {
 impl<'a> From<Table<'a>> for AnyWidget<'a> {
     fn from(table: Table<'a>) -> Self {
         AnyWidget::Table(table)
+    }
+}
+
+impl<'a> From<&'a Input> for AnyWidget<'a> {
+    fn from(input: &'a Input) -> Self {
+        AnyWidget::Input(input)
     }
 }
 
@@ -122,10 +131,34 @@ impl State {
             .join("\n")
     }
 
-    /// Renders the state to a widget.
-    pub fn render(&self) -> Option<AnyWidget> {
+    /// Returns the help message for the state.
+    pub fn help(&self) -> String {
         match self {
-            State::AddCombatant(add) => Some(add.render().into()),
+            State::AddCombatant(add) => add.help(),
+            _ => self.default_help(),
+        }
+    }
+
+    /// Renders the state to two widgets, one for the state, and one for the input.
+    pub fn render(&self) -> Option<(AnyWidget, Option<AnyWidget>)> {
+        match self {
+            State::AddCombatant(add) => Some((add.render().into(), Some((&add.input).into()))),
+            _ => None,
+        }
+    }
+
+    /// Returns true if this state needs to handle keyboard events.
+    pub fn needs_keyboard(&self) -> bool {
+        match self {
+            State::AddCombatant(_) => true,
+            _ => false,
+        }
+    }
+
+    /// Receive events from the keyboard.
+    pub fn handle_event(&mut self, key: KeyEvent, tracker: &mut Tracker) -> Option<State> {
+        match self {
+            State::AddCombatant(add) => add.handle_event(key, tracker),
             _ => None,
         }
     }

@@ -19,10 +19,21 @@ impl Tracker {
         Tracker::default()
     }
 
+    /// Adds a new combatant to the initiative tracker.
+    pub fn add_combatant(&mut self, combatant: Combatant) {
+        self.combatants.push(combatant);
+
+        // highest initiative first
+        self.combatants.sort_by(|a, b| b.initiative().cmp(&a.initiative()));
+    }
+
     /// Render the tracker to a [`Table`] widget.
     pub fn render(&self) -> Table {
         Table::new(
-            vec![Row::new(["24", "Alice"]).height(2), Row::new(["2", "Bob"]).height(2)],
+            // vec![Row::new(["24", "Alice"]).height(2), Row::new(["2", "Bob"]).height(2)],
+            self.combatants.iter()
+                .map(|combatant| Row::new(combatant.record()).height(2))
+                .collect::<Vec<_>>(),
             vec![Constraint::Percentage(50), Constraint::Percentage(50)],
         )
             .block(
