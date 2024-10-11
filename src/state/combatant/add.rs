@@ -46,11 +46,11 @@ impl AddCombatant {
             Row::new([Text::from(name), Text::from(value)])
         };
         Table::new(
-            vec![
+            [
                 maybe_highlight(self.row == 0, "Name", self.name.as_ref().map(|name| name.to_string()).unwrap_or_default()),
                 maybe_highlight(self.row == 1, "Hit Points", self.hit_points.as_ref().map(|hp| hp.to_string()).unwrap_or_default()),
             ],
-            vec![Constraint::Percentage(50), Constraint::Percentage(50)],
+            [Constraint::Percentage(50), Constraint::Percentage(50)],
         )
             .block(
                 Block::bordered()

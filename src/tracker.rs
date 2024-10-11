@@ -31,9 +31,8 @@ impl Tracker {
     pub fn render(&self) -> Table {
         Table::new(
             self.combatants.iter()
-                .map(|combatant| combatant.row().height(2))
-                .collect::<Vec<_>>(),
-            vec![
+                .map(|combatant| combatant.row().height(2)),
+            [
                 Constraint::Length(12), // initiative
                 Constraint::Fill(1),    // name
                 Constraint::Length(10), // actions
