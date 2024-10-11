@@ -8,7 +8,7 @@ pub struct Combatant {
     name: String,
 
     /// The combatant's initiative roll.
-    initiative: i32,
+    pub initiative: i32,
 
     /// The hit points of the combatant.
     hit_points: i32,
@@ -34,6 +34,11 @@ impl Combatant {
             temp_hit_points: 0,
             actions: Actions::default(),
         }
+    }
+
+    /// Returns the combatant's name.
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
     /// Returns the combatant's initiative.

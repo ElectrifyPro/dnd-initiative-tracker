@@ -1,8 +1,10 @@
 mod combatant;
+mod initiative;
 
 use combatant::add::AddCombatant;
 use crate::{input::Input, tracker::Tracker};
 use crossterm::event::{KeyCode, KeyEvent};
+use initiative::RollInitiative;
 use ratatui::{prelude::*, widgets::*};
 
 fn fmt_key_code(key: KeyCode) -> String {
@@ -71,6 +73,9 @@ pub enum State {
     /// Adding a new combatant to the initiative order.
     AddCombatant(AddCombatant),
 
+    /// Roll initiative for all combatants.
+    RollInitiative(RollInitiative),
+
     /// Special quit state, which exits the program.
     Quit,
 }
@@ -83,8 +88,13 @@ impl State {
     /// A transition declaration can also override the default key that triggers the transition.
     pub fn transitions(&self) -> Vec<Transition> {
         match self {
-            State::Home => vec![State::AddCombatant(AddCombatant::default()).into(), State::Quit.into()],
+            State::Home => vec![
+                State::AddCombatant(AddCombatant::default()).into(),
+                State::RollInitiative(RollInitiative::default()).into(),
+                State::Quit.into(),
+            ],
             State::AddCombatant(_) => vec![State::Home.into()],
+            State::RollInitiative(_) => vec![State::Home.into()],
             State::Quit => vec![],
         }
     }
@@ -103,6 +113,7 @@ impl State {
         match self {
             State::Home => KeyCode::Char('h'),
             State::AddCombatant(_) => KeyCode::Char('a'),
+            State::RollInitiative(_) => KeyCode::Char('r'),
             State::Quit => KeyCode::Char('q'),
         }
     }
@@ -112,6 +123,7 @@ impl State {
         match self {
             State::Home => "back to initiative tracker",
             State::AddCombatant(_) => "add combatant to initiative order",
+            State::RollInitiative(_) => "roll initiative!",
             State::Quit => "quit the program",
         }
     }
@@ -135,6 +147,7 @@ impl State {
     pub fn help(&self) -> String {
         match self {
             State::AddCombatant(add) => add.help(),
+            State::RollInitiative(roll) => roll.help(),
             _ => self.default_help(),
         }
     }
@@ -143,6 +156,7 @@ impl State {
     pub fn render(&self) -> Option<(AnyWidget, Option<AnyWidget>)> {
         match self {
             State::AddCombatant(add) => Some((add.render().into(), Some(add.input().into()))),
+            State::RollInitiative(roll) => Some((roll.render().into(), Some(roll.input().into()))),
             _ => None,
         }
     }
@@ -151,7 +165,16 @@ impl State {
     pub fn needs_keyboard(&self) -> bool {
         match self {
             State::AddCombatant(_) => true,
+            State::RollInitiative(_) => true,
             _ => false,
+        }
+    }
+
+    /// Initialize the tracker when transitioning to this state, if necessary.
+    pub fn init_tracker(&mut self, tracker: &mut Tracker) {
+        match self {
+            State::RollInitiative(roll) => roll.init_tracker(tracker),
+            _ => (),
         }
     }
 
@@ -159,6 +182,7 @@ impl State {
     pub fn handle_event(&mut self, key: KeyEvent, tracker: &mut Tracker) -> Option<State> {
         match self {
             State::AddCombatant(add) => add.handle_event(key, tracker),
+            State::RollInitiative(roll) => roll.handle_event(key, tracker),
             _ => None,
         }
     }

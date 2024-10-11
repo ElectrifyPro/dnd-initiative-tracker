@@ -39,10 +39,12 @@ fn main() -> std::io::Result<()> {
         if state.needs_keyboard() {
             if let Some(new_state) = state.handle_event(event, &mut tracker) {
                 state = new_state;
+                state.init_tracker(&mut tracker);
             }
         } else {
             if let Some(transition) = state.transition(event.code) {
                 state = transition.state;
+                state.init_tracker(&mut tracker);
             }
         }
     }
