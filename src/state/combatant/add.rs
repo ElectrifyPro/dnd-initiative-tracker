@@ -3,7 +3,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{prelude::*, widgets::*};
 
 /// Adding a new combatant to the initiative order.
-#[derive(Default, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub struct AddCombatant {
     /// The name of the combatant.
     pub name: Option<String>,
@@ -17,6 +17,23 @@ pub struct AddCombatant {
     input: Input,
 }
 
+impl Default for AddCombatant {
+    fn default() -> Self {
+        Self {
+            name: None,
+            hit_points: None,
+            row: 0,
+            input: Input::default()
+                .with_ignore([
+                    KeyCode::Char('+'),
+                    KeyCode::Char('='),
+                    KeyCode::Char('-'),
+                    KeyCode::Char('_'),
+                ].into()),
+        }
+    }
+}
+
 impl AddCombatant {
     /// Returns the [`Input`] widget.
     pub fn input(&self) -> &Input {
@@ -24,14 +41,11 @@ impl AddCombatant {
     }
 
     pub fn help(&self) -> String {
-        format!(
-            "<escape>: cancel, back to initiative tracker\n<enter>: {0}\n<ctrl-enter>: {0} and finish",
-            match self.row {
-                0 => "set name",
-                1 => "set hit points",
-                _ => "",
-            }
-        )
+        "<escape>: cancel, back to initiative tracker
+<enter>: add combatant
+<ctrl-enter>: add combatant and finish
++ or =: next field
+- or _: previous field".to_string()
     }
 
     pub fn render(&self) -> Table {
@@ -71,6 +85,10 @@ impl AddCombatant {
     }
 
     pub fn set_row_content(&mut self, content: String) {
+        if content.is_empty() {
+            return;
+        }
+
         match self.row {
             0 => self.name = Some(content),
             1 => self.hit_points = Some(content.parse().unwrap_or_default()),
@@ -87,14 +105,26 @@ impl AddCombatant {
             KeyCode::Enter => {
                 let content = self.input.take();
                 self.set_row_content(content);
+
+                let hp = self.hit_points.take().unwrap_or_default();
+                tracker.add_combatant(Combatant::new(
+                    self.name.take().unwrap_or_default(),
+                    hp,
+                    hp,
+                ));
+
+                self.set_row_idx(0);
+                None
+            },
+            KeyCode::Char('+') | KeyCode::Char('=') => {
+                let content = self.input.take();
+                self.set_row_content(content);
                 self.set_row_idx((self.row + 1) % 2);
                 None
             },
-            KeyCode::Down => {
-                self.set_row_idx((self.row + 1) % 2);
-                None
-            },
-            KeyCode::Up => {
+            KeyCode::Char('-') | KeyCode::Char('_') => {
+                let content = self.input.take();
+                self.set_row_content(content);
                 self.set_row_idx((self.row + 1) % 2);
                 None
             },
@@ -102,6 +132,7 @@ impl AddCombatant {
             KeyCode::Char('j') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                 let content = self.input.take();
                 self.set_row_content(content);
+
                 let hp = self.hit_points.take().unwrap_or_default();
                 tracker.add_combatant(Combatant::new(
                     self.name.take().unwrap_or_default(),

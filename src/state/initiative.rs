@@ -3,7 +3,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{prelude::*, widgets::*};
 
 /// Roll initiative for a combat encounter.
-#[derive(Default, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub struct RollInitiative {
     /// The name of the combatant we're rolling initiative for.
     pub name: Option<String>,
@@ -17,6 +17,23 @@ pub struct RollInitiative {
     pub input: Input,
 }
 
+impl Default for RollInitiative {
+    fn default() -> Self {
+        Self {
+            name: None,
+            initiative: None,
+            row: 0,
+            input: Input::default()
+                .with_ignore([
+                    KeyCode::Char('+'),
+                    KeyCode::Char('='),
+                    KeyCode::Char('-'),
+                    KeyCode::Char('_'),
+                ].into()),
+        }
+    }
+}
+
 impl RollInitiative {
     /// Returns the [`Input`] widget.
     pub fn input(&self) -> &Input {
@@ -24,7 +41,11 @@ impl RollInitiative {
     }
 
     pub fn help(&self) -> String {
-        "<escape>: cancel, back to initiative tracker\n<enter>: set initiative\n<ctrl-enter>: set initiative and finish, sort combatants\n<up>: previous combatant\n<down>: next combatant".to_string()
+        "<escape>: cancel, back to initiative tracker
+<enter>: set initiative
+<ctrl-enter>: set initiative and finish, sort all combatants
++ or =: previous combatant
+- or _: next combatant".to_string()
     }
 
     pub fn render(&self) -> Table {
@@ -68,13 +89,13 @@ impl RollInitiative {
                 self.set_row(next_row, tracker);
                 None
             },
-            KeyCode::Down => {
+            KeyCode::Char('+') | KeyCode::Char('=') => {
                 let next_row = (self.row + 1) % tracker.combatants().len();
                 self.set_row(next_row, tracker);
                 None
             },
-            KeyCode::Up => {
-                let prev_row = self.row.wrapping_sub(1) % tracker.combatants().len();
+            KeyCode::Char('-') | KeyCode::Char('_') => {
+                let prev_row = self.row.wrapping_sub(1).min(tracker.combatants().len() - 1);
                 self.set_row(prev_row, tracker);
                 None
             },

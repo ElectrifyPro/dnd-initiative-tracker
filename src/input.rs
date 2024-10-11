@@ -1,5 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{prelude::*, widgets::*};
+use std::collections::HashSet;
 
 /// Helper to provide Bash-like text input functionality.
 #[derive(Default, PartialEq, Eq)]
@@ -9,6 +10,9 @@ pub struct Input {
 
     /// The current cursor position.
     cursor: usize,
+
+    /// Keys to ignore.
+    ignore: HashSet<KeyCode>,
 }
 
 impl Widget for &Input {
@@ -43,10 +47,20 @@ impl Widget for &Input {
 }
 
 impl Input {
+    /// Set the keys to ignore.
+    pub fn with_ignore(mut self, ignore: HashSet<KeyCode>) -> Self {
+        self.ignore = ignore;
+        self
+    }
+
     /// Updates the input given a key event.
     ///
     /// Returns the key event if it was not consumed by the input.
     pub fn update(&mut self, event: KeyEvent) -> Option<KeyEvent> {
+        if self.ignore.contains(&event.code) {
+            return Some(event);
+        }
+
         match event.code {
             KeyCode::Char(c) if !event.modifiers.contains(KeyModifiers::CONTROL) => {
                 self.buffer.insert(self.cursor, c);
