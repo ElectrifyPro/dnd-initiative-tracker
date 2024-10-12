@@ -69,6 +69,12 @@ impl RollInitiative {
         self.row = row;
         tracker.highlight(row);
         self.name = tracker.combatant(row).map(|c| c.name().to_string());
+
+        if let Some(combatant) = tracker.combatant(row) {
+            self.name = Some(combatant.name().to_string());
+            self.initiative = Some(combatant.initiative);
+            self.input.set(combatant.initiative.to_string());
+        }
     }
 
     pub fn init_tracker(&mut self, tracker: &mut Tracker) {
