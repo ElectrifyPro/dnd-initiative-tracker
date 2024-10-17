@@ -1,13 +1,9 @@
 use ratatui::{prelude::*, widgets::*};
-use super::{Combatant, State};
+use super::Combatant;
 
 /// Manages the initiative tracker.
 #[derive(Default)]
 pub struct Tracker {
-    /// The current state / view of the tracker, indicating what actions the user can take at the
-    /// current moment.
-    state: State,
-
     /// The combatants of the encounter, ordered by initiative. The first combatant in the list is
     /// the combatant with the highest initiative.
     combatants: Vec<Combatant>,
