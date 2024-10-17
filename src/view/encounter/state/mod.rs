@@ -2,10 +2,10 @@ mod combatant;
 mod initiative;
 
 use combatant::add::AddCombatant;
-use crate::{input::Input, tracker::Tracker};
+use crate::{any_widget::AnyWidget, view::Transition};
 use crossterm::event::{KeyCode, KeyEvent};
 use initiative::RollInitiative;
-use ratatui::{prelude::*, widgets::*};
+use super::EncounterBuilder;
 
 fn fmt_key_code(key: KeyCode) -> String {
     match key {
@@ -14,66 +14,18 @@ fn fmt_key_code(key: KeyCode) -> String {
     }
 }
 
-/// A state transition declaration.
-pub struct Transition {
-    /// The state to transition to.
-    pub state: State,
-
-    /// The key that triggers the transition.
-    pub key: KeyCode,
-}
-
-/// Creates a new transition declaration using the state's default key.
-impl From<State> for Transition {
-    fn from(state: State) -> Self {
-        Self {
-            key: state.default_key_event(),
-            state,
-        }
-    }
-}
-
-/// A widget that can be rendered to the terminal.
-pub enum AnyWidget<'a> {
-    Table(Table<'a>),
-    Input(&'a Input),
-}
-
-impl Widget for AnyWidget<'_> {
-    fn render(self, area: Rect, buf: &mut Buffer)
-        where Self: Sized
-    {
-        match self {
-            AnyWidget::Table(table) => Widget::render(table, area, buf),
-            AnyWidget::Input(input) => Widget::render(input, area, buf),
-        }
-    }
-}
-
-impl<'a> From<Table<'a>> for AnyWidget<'a> {
-    fn from(table: Table<'a>) -> Self {
-        AnyWidget::Table(table)
-    }
-}
-
-impl<'a> From<&'a Input> for AnyWidget<'a> {
-    fn from(input: &'a Input) -> Self {
-        AnyWidget::Input(input)
-    }
-}
-
-/// Any state the initiative tracker can be in.
-#[derive(Default, PartialEq, Eq)]
+/// Any state the encounter builder can be in.
+#[derive(Default, Debug, PartialEq, Eq)]
 pub enum State {
-    /// The home state, where the user can view the initiative order and launch any other state
-    /// below.
+    /// The home state, where the user can view the currently added combatants and launch any other
+    /// state below.
     #[default]
     Home,
 
-    /// Adding a new combatant to the initiative order.
+    /// Adding a new combatant to the encounter.
     AddCombatant(AddCombatant),
 
-    /// Roll initiative for all combatants.
+    /// Roll initiative for all combatants and start the encounter.
     RollInitiative(RollInitiative),
 
     /// Special quit state, which exits the program.
@@ -86,7 +38,7 @@ impl State {
     /// Declares the states that can be reached from this state.
     ///
     /// A transition declaration can also override the default key that triggers the transition.
-    pub fn transitions(&self) -> Vec<Transition> {
+    pub fn transitions(&self) -> Vec<Transition<State>> {
         match self {
             State::Home => vec![
                 State::AddCombatant(AddCombatant::default()).into(),
@@ -100,7 +52,7 @@ impl State {
     }
 
     /// Returns the state to transition to given a key event.
-    pub fn transition(&self, key: KeyCode) -> Option<Transition> {
+    pub fn transition(&self, key: KeyCode) -> Option<Transition<State>> {
         self.transitions()
             .into_iter()
             .find(|transition| transition.key == key)
@@ -170,19 +122,19 @@ impl State {
         }
     }
 
-    /// Initialize the tracker when transitioning to this state, if necessary.
-    pub fn init_tracker(&mut self, tracker: &mut Tracker) {
+    /// Initialize the encounter builder when transitioning to this state, if necessary.
+    pub fn init_encounter(&mut self, encounter_builder: &mut EncounterBuilder) {
         match self {
-            State::RollInitiative(roll) => roll.init_tracker(tracker),
+            State::RollInitiative(roll) => roll.init_encounter(encounter_builder),
             _ => (),
         }
     }
 
     /// Receive events from the keyboard.
-    pub fn handle_event(&mut self, key: KeyEvent, tracker: &mut Tracker) -> Option<State> {
+    pub fn handle_event(&mut self, key: KeyEvent, encounter_builder: &mut EncounterBuilder) -> Option<State> {
         match self {
-            State::AddCombatant(add) => add.handle_event(key, tracker),
-            State::RollInitiative(roll) => roll.handle_event(key, tracker),
+            State::AddCombatant(add) => add.handle_event(key, encounter_builder),
+            State::RollInitiative(roll) => roll.handle_event(key, encounter_builder),
             _ => None,
         }
     }

@@ -1,9 +1,12 @@
-use ratatui::{prelude::*, widgets::*};
-use super::Combatant;
+mod combatant;
+pub mod state;
 
-/// Manages the initiative tracker.
+use combatant::Combatant;
+use ratatui::{prelude::*, widgets::*};
+
+/// Manages the initial state of the program, where the user can add combatants to the encounter.
 #[derive(Default)]
-pub struct Tracker {
+pub struct EncounterBuilder {
     /// The combatants of the encounter, ordered by initiative. The first combatant in the list is
     /// the combatant with the highest initiative.
     combatants: Vec<Combatant>,
@@ -12,23 +15,20 @@ pub struct Tracker {
     highlighted: Option<usize>,
 }
 
-impl Tracker {
-    /// Creates a new initiative tracker.
-    pub fn new() -> Tracker {
-        Tracker::default()
+impl EncounterBuilder {
+    /// Creates a new encounter builder.
+    pub fn new() -> EncounterBuilder {
+        EncounterBuilder::default()
     }
 
-    /// Returns a reference to the combatants in the tracker.
+    /// Returns a reference to the combatants in the encounter builder.
     pub fn combatants(&self) -> &[Combatant] {
         &self.combatants
     }
 
-    /// Adds a new combatant to the initiative tracker.
+    /// Adds a new combatant to the encounter builder.
     pub fn add_combatant(&mut self, combatant: Combatant) {
         self.combatants.push(combatant);
-
-        // highest initiative first
-        self.sort();
     }
 
     /// Gets reference to the combatant at the given index.
@@ -41,11 +41,6 @@ impl Tracker {
         self.combatants.get_mut(idx)
     }
 
-    /// Sorts the combatants by initiative.
-    pub fn sort(&mut self) {
-        self.combatants.sort_by(|a, b| b.initiative().cmp(&a.initiative()));
-    }
-
     /// Highlight the combatant at the given index.
     pub fn highlight(&mut self, idx: usize) {
         self.highlighted = Some(idx);
@@ -56,7 +51,7 @@ impl Tracker {
         self.highlighted = None;
     }
 
-    /// Render the tracker to a [`Table`] widget.
+    /// Render the encounter builder to a [`Table`] widget.
     pub fn render(&self) -> Table {
         Table::new(
             self.combatants.iter()
@@ -70,9 +65,7 @@ impl Tracker {
                     }
                 }),
             [
-                Constraint::Length(12), // initiative
                 Constraint::Fill(1),    // name
-                Constraint::Length(10), // actions
                 Constraint::Length(14), // hp / max hp
                 Constraint::Length(10), // temp hp
             ],
@@ -82,13 +75,11 @@ impl Tracker {
                     .border_type(BorderType::Rounded)
                     .border_style(Style::default().fg(Color::White))
                     .padding(Padding::horizontal(1))
-                    .title("Initiative Tracker")
+                    .title("Encounter Builder")
             )
             .header(
                 Row::new([
-                    Text::from("Initiative").centered(),
                     Text::from("Name").centered(),
-                    Text::from("Actions").centered(),
                     Text::from("HP / Max HP").centered(),
                     Text::from("Temp HP").centered(),
                 ])

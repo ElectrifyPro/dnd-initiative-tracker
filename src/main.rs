@@ -10,44 +10,56 @@
 //! commands for the current context or `u` to undo the last command.
 
 mod actions;
-mod combatant;
+mod any_widget;
 mod input;
-mod state;
-mod tracker;
 mod ui;
+mod view;
 
-use combatant::Combatant;
 use crossterm::event::{read, Event};
-use state::State;
 use ui::Ui;
-use tracker::Tracker;
+use view::{encounter::EncounterBuilder, tracker::Tracker, State, TransitionResult, View};
 
-fn main() -> std::io::Result<()> {
-    let mut ui = Ui::new()?;
-    let mut tracker = Tracker::new();
-    let mut state = State::Home;
-
+fn render_view<S, V>(ui: &mut Ui, state: &mut S, view: &mut V) -> std::io::Result<()>
+where
+    S: State,
+    V: View<State = S>,
+{
     loop {
-        if state == State::Quit {
+        if V::is_quit(&state) {
             break;
         }
 
-        ui.render(&tracker, &state)?;
+        ui.render_view(view, state)?;
         let Event::Key(event) = read()? else {
             continue;
         };
         if state.needs_keyboard() {
-            if let Some(new_state) = state.handle_event(event, &mut tracker) {
-                state = new_state;
-                state.init_tracker(&mut tracker);
+            if let Some(new_state) = view.handle_event(event, state) {
+                *state = new_state;
+                view.init(state);
             }
         } else {
-            if let Some(transition) = state.transition(event.code) {
-                state = transition.state;
-                state.init_tracker(&mut tracker);
+            if let TransitionResult::New = state.transition(event.code) {
+                view.init(state);
             }
         }
     }
+
+    Ok(())
+}
+
+fn main() -> std::io::Result<()> {
+    let mut ui = Ui::new()?;
+    let mut encounter = EncounterBuilder::new();
+    let mut state = EncounterBuilder::default_state();
+
+    render_view(&mut ui, &mut state, &mut encounter)?;
+
+    // let mut ui = Ui::new()?;
+    // let mut tracker = Tracker::new();
+    // let mut state = State::Home;
+    //
+    // render_view(&mut ui, &mut state, &mut tracker)?;
 
     Ok(())
 }

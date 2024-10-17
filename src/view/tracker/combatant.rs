@@ -1,6 +1,5 @@
 use crate::actions::Actions;
 use ratatui::widgets::{Cell, Row};
-use std::borrow::Cow;
 
 /// A combatant in a combat encounter.
 pub struct Combatant {

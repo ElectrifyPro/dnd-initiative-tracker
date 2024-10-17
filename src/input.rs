@@ -3,7 +3,7 @@ use ratatui::{prelude::*, widgets::*};
 use std::collections::HashSet;
 
 /// Helper to provide Bash-like text input functionality.
-#[derive(Default, PartialEq, Eq)]
+#[derive(Default, Debug, PartialEq, Eq)]
 pub struct Input {
     /// The current input buffer.
     buffer: String,

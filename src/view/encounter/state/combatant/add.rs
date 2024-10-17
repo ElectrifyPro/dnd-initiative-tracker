@@ -1,9 +1,9 @@
-use crate::{combatant::Combatant, input::Input, state::State, tracker::Tracker};
+use crate::{input::Input, view::encounter::{combatant::Combatant, state::State, EncounterBuilder}};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{prelude::*, widgets::*};
 
 /// Adding a new combatant to the initiative order.
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct AddCombatant {
     /// The name of the combatant.
     pub name: Option<String>,
@@ -96,7 +96,7 @@ impl AddCombatant {
         }
     }
 
-    pub fn handle_event(&mut self, key: KeyEvent, tracker: &mut Tracker) -> Option<State> {
+    pub fn handle_event(&mut self, key: KeyEvent, tracker: &mut EncounterBuilder) -> Option<State> {
         let Some(unhandled_key) = self.input.update(key) else {
             return None;
         };
@@ -106,12 +106,12 @@ impl AddCombatant {
                 let content = self.input.take();
                 self.set_row_content(content);
 
-                let hp = self.hit_points.take().unwrap_or_default();
-                tracker.add_combatant(Combatant::new(
-                    self.name.take().unwrap_or_default(),
-                    hp,
-                    hp,
-                ));
+                let hp = self.hit_points.take();
+                let combatant = Combatant::default()
+                    .name(self.name.take())
+                    .hit_points(hp)
+                    .max_hit_points(hp);
+                tracker.add_combatant(combatant);
 
                 self.set_row_idx(0);
                 None
@@ -133,12 +133,12 @@ impl AddCombatant {
                 let content = self.input.take();
                 self.set_row_content(content);
 
-                let hp = self.hit_points.take().unwrap_or_default();
-                tracker.add_combatant(Combatant::new(
-                    self.name.take().unwrap_or_default(),
-                    hp,
-                    hp,
-                ));
+                let hp = self.hit_points.take();
+                let combatant = Combatant::default()
+                    .name(self.name.take())
+                    .hit_points(hp)
+                    .max_hit_points(hp);
+                tracker.add_combatant(combatant);
                 Some(State::Home)
             },
             _ => None,

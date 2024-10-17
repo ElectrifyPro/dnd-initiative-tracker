@@ -1,4 +1,4 @@
-use crate::{state::State, tracker::Tracker};
+use crate::view::{State, View};
 use crossterm::{
     cursor,
     event,
@@ -94,10 +94,14 @@ impl Ui {
         }
     }
 
-    /// Renders the initiative tracker to the terminal.
-    pub fn render(&mut self, tracker: &Tracker, state: &State) -> io::Result<()> {
+    /// Renders the view to the terminal.
+    pub fn render_view<S, V>(&mut self, view: &V, state: &S) -> io::Result<()>
+    where
+        S: State,
+        V: View<State = S>,
+    {
         self.terminal.draw(|f| {
-            f.render_widget(tracker.render(), self.locations.combatant_table);
+            f.render_widget(view.render(), self.locations.combatant_table);
             f.render_widget(
                 Paragraph::new(state.help())
                     .block(
